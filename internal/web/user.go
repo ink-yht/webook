@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -47,8 +46,6 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-
-	fmt.Println(req)
 
 	ok, err := u.emilExp.MatchString(req.Email)
 	if err != nil {
