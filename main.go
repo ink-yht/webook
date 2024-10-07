@@ -3,12 +3,30 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"strings"
 	"time"
+	"webook/internal/repository"
+	"webook/internal/repository/dao"
+	"webook/internal/service"
 	"webook/internal/web"
 )
 
 func main() {
+
+	db := initDB()
+
+	server := initWebServer()
+
+	u := initUser(db)
+
+	u.RegisterRouter(server)
+
+	server.Run(":8080")
+}
+
+func initWebServer() *gin.Engine {
 	server := gin.Default()
 
 	server.Use(cors.New(cors.Config{
@@ -25,9 +43,25 @@ func main() {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
+	return server
+}
 
-	u := web.NewUserHandler()
-	u.RegisterRouter(server)
+func initUser(db *gorm.DB) *web.UserHandler {
+	ud := dao.NewUserDAO(db)
+	repo := repository.NewUserRepository(ud)
+	svc := service.NewUserService(repo)
+	u := web.NewUserHandler(svc)
+	return u
+}
 
-	server.Run(":8080")
+func initDB() *gorm.DB {
+	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	if err != nil {
+		panic(err)
+	}
+	err = dao.InitTable(db)
+	if err != nil {
+		panic(err)
+	}
+	return db
 }
